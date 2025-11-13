@@ -1,6 +1,7 @@
 from transformers import pipeline
 from preprocessing import extract_text, clean_text, split_sentences, chunk_text
 
+
 # Load summarization model (DistilBART)
 summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
 
@@ -9,6 +10,7 @@ def summarize_text_adaptive(cleaned_text, chunks):
     word_count = len(cleaned_text.split())
 
     print(f"Total word count: {word_count}")
+   
 
     # If Short text (under ~1000 words), summarize it all together
     if word_count < 1000:
