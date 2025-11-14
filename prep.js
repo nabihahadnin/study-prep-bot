@@ -1,15 +1,20 @@
-document.getElementById('file-path').addEventListener('submit', async (e) => {
+document.getElementById('upload-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-
-  const fileInput = document.getElementById('text-input');
+ 
+  const fileInput = document.getElementById('file-input');
+  const file = fileInput.files[0];
+  if (!file) return;
 
   document.getElementById('loading').style.display = 'block';
+
+  const formData = new FormData();
+  formData.append('file', file);
 
 
   const response = await fetch('http://127.0.0.1:5500/study-prep-bot/prep.html/main', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ path: fileInput })
+    body: formData
   });
 
   const data = await response.json();

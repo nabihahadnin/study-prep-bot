@@ -12,12 +12,15 @@
     <p> An intelligent application that transforms lengthy and unstructured lecture notes into 
         a concise and interactive study materials. </p>
 
-    <form id="file-path">
-      <label for="text-input">Enter file path:</label>
-      <input type="text" id="text-input" name="text-input" required />
-      <button type="submit">Prep Text</button>
-      <!-- <button type="submit">Generate Quiz</button> -->
+    
+    <form id="upload-form">
+      <label for="file-input">Upload a document:</label>
+      <input type="file" id="file-input" accept=".pdf,.docx,.txt" required />
+      <button type="submit">Generate Quiz</button>
+      <button type="submit">Generate Summary</button>
+      <button type="submit">Generate Summary and Quiz</button>
     </form>
+
 
     <div id="loading" style="display: none;"> Generating quiz...</div>
 
