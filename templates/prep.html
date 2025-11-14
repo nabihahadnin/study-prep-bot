@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Quiz Generator</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='prep.css')}}" />
+</head>
+<body>
+  <div class="container">
+    <h1> STUDY PREP AI  </h1>
+    <p> An intelligent application that transforms lengthy and unstructured lecture notes into 
+        a concise and interactive study materials. </p>
+
+    
+    <form id="upload-form">
+      <label for="file-input">Upload a document:</label>
+      <input type="file" id="file-input" accept=".pdf,.docx,.txt" required />
+      <button type="button" id="flashcards-btn">Generate Quiz</button>
+      <button type="button" id="summary-btn">Generate Summary</button>
+      <button type="button" id="both-btn">Generate Summary and Quiz</button>
+    </form>
+
+
+    <div id="loading" style="display: none;"> Generating...</div>
+
+    <div id="quiz-container"></div>
+  </div>
+
+  <script src="{{ url_for('static', filename='prep.js')}}"></script>
+</body>
+</html>

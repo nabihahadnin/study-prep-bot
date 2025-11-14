@@ -4,7 +4,7 @@ from flashcards import generate_flashcards
 import nltk
 
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import os
 
 app = Flask(__name__)
@@ -13,20 +13,26 @@ app = Flask(__name__)
 nltk.download('punkt', quiet=True)
 nltk.download('stopwords', quiet=True)
 
+@app.route('/')
+def home():
+    return render_template('prep.html')
+
 @app.route('/main', methods=['POST'])
 def main():
         
-    data = request.get_json()
-    file_path = data['path'].strip()
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+    
+    generate_type = request.form.get('type', 'summary')
+    file = request.files['file']
+    file_path = file.filename
+    file.save(file_path)
 
         
     if not os.path.exists(file_path):
         return jsonify({'error': 'File not found'}), 404
 
     print("Study Prep AI\n")
-
-    # Get file path
-    file_path = input("Enter the path to your file (e.g., test/sample-pdf.pdf): ").strip()
 
     # Preprocessing
     print("\nRunning preprocessing...")
@@ -42,7 +48,27 @@ def main():
     print("\nSummarization complete!\n")
     print("Final Summary:\n")
         
-    return jsonify({'Summary': final_summary})
+    response_data = {}
+
+    if generate_type in ['summary', 'both']:
+        response_data['summary'] = final_summary
+
+    if generate_type in ['quiz', 'both']:
+        flashcards = generate_flashcards(final_summary, num_cards=5)
+        flashcards_data = [{"question": q, "answer": a} for q, a in flashcards]
+        response_data['flashcards'] = flashcards_data
+        
+        print("\nFLASHCARDS:\n")
+        for i, (q, a) in enumerate(flashcards, 1):
+            print(f"{i}. Q: {q}")
+            print(f"   A: {a}\n")
+
+    try:
+        os.remove(file_path)
+    except:
+        pass
+
+    return jsonify(response_data)
 
 
     # Generate flashcards
