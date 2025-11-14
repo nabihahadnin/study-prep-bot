@@ -1,5 +1,6 @@
 from preprocessing import extract_text, clean_text, split_sentences, chunk_text
 from summarization import summarize_text_adaptive
+from flashcards import generate_flashcards  
 import nltk
 
 
@@ -22,8 +23,12 @@ def main():
     if not os.path.exists(file_path):
         return jsonify({'error': 'File not found'}), 404
 
+    print("Study Prep AI\n")
 
-    # Step 2: Extract and preprocess
+    # Get file path
+    file_path = input("Enter the path to your file (e.g., test/sample-pdf.pdf): ").strip()
+
+    # Preprocessing
     print("\nRunning preprocessing...")
     text = extract_text(file_path)
     cleaned_text = clean_text(text)
@@ -39,7 +44,8 @@ def main():
         
     return jsonify({'Summary': final_summary})
 
-     # Generate flashcards
+
+    # Generate flashcards
     flashcards = generate_flashcards(final_summary, num_cards=5)
 
     print("\nFLASHCARDS:\n")
