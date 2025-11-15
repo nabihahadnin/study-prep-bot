@@ -67,20 +67,20 @@ def generate_flashcards(summary_text, num_cards):
         flashcards.append((q, a))
 
     return flashcards
+    
+# Dynamically determine number of cards generated based on final summary word count
+def determine_num_cards(summary_text):
+    wc = len(summary_text.split())
+
+    if wc < 120:
+        return 2
+    elif wc < 220:
+        return 3
+    elif wc < 320:
+        return 4
+    elif wc < 450:
+        return 5
+    else:
+        return 6
 
 
-# To debug
-if __name__ == "__main__":
-    text = (
-        "In the first quarter of the 20th century, the Treasury Department claimed that about one million "
-        "Americans—1 in 10—were dependent on opium or its derivatives. That’s an outrageously high figure, "
-        "and of course, it was only an estimate. As you might have guessed, many experts were deeply skeptical, "
-        "believing the number was considerably lower. There were good reasons to be leery. For one thing, there "
-        "were no reliable data assessing this issue, and for another, the greater of number of people addicted to "
-        "opioids, the larger the Treasury Department’s Harrison Act budget. "
-    )
-    cards = generate_flashcards(text, 2)
-
-    for i, (q, a) in enumerate(cards, 1):
-        print(f"\n{i}. Q: {q}")
-        print(f"A: {a}")

@@ -1,6 +1,6 @@
 from preprocessing import extract_text, clean_text, split_sentences, chunk_text
 from summarization import summarize_text_adaptive
-from flashcards import generate_flashcards  
+from flashcards import generate_flashcards, determine_num_cards
 import nltk
 
 
@@ -54,7 +54,8 @@ def main():
         response_data['summary'] = final_summary
 
     if generate_type in ['flashcards', 'both']:
-        flashcards = generate_flashcards(final_summary, num_cards=5)
+        num_cards = determine_num_cards(final_summary)
+        flashcards = generate_flashcards(final_summary, num_cards)
         flashcards_data = [{"question": q, "answer": a} for q, a in flashcards]
         response_data['flashcards'] = flashcards_data
         
@@ -70,14 +71,15 @@ def main():
 
     return jsonify(response_data)
 
-
     # Generate flashcards
-    flashcards = generate_flashcards(final_summary, num_cards=5)
+    num_cards = determine_num_cards(final_summary)
+    flashcards = generate_flashcards(final_summary, num_cards)
 
     print("\nFLASHCARDS:\n")
     for i, (q, a) in enumerate(flashcards, 2):
         print(f"{i}. Q: {q}")
         print(f"   A: {a}\n")
+
 
 if __name__ == "__main__":
     app.run(debug=True)
