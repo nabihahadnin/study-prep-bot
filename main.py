@@ -53,7 +53,7 @@ def main():
     if generate_type in ['summary', 'both']:
         response_data['summary'] = final_summary
 
-    if generate_type in ['quiz', 'both']:
+    if generate_type in ['flashcards', 'both']:
         flashcards = generate_flashcards(final_summary, num_cards=5)
         flashcards_data = [{"question": q, "answer": a} for q, a in flashcards]
         response_data['flashcards'] = flashcards_data
