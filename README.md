@@ -69,6 +69,13 @@ cd study-prep-bot
 ```bash
 pip install -r requirements.txt
 ```
+### Additional Required Downloads
+
+spaCy requires downloading an English model before first use:
+
+```
+python -m spacy download en_core_web_sm
+```
 
 ### 3️. Run the Flask app
 
