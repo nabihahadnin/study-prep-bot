@@ -1,79 +1,129 @@
-from transformers import pipeline
+from transformers import pipeline, AutoTokenizer
 from preprocessing import extract_text, clean_text, split_sentences, chunk_text
+from nltk.tokenize import sent_tokenize
+import re
 
-
-# Load summarization model (DistilBART)
+# Load summarizer + tokenizer
 summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
+tokenizer = AutoTokenizer.from_pretrained("sshleifer/distilbart-cnn-12-6")
 
+# Post-Summarization cleaning + smoothing helpers
+def clean_summary_text(text):
+    # Fix punctuation and double spaces
+    text = re.sub(r"\s+\.", ".", text)
+    text = re.sub(r"\s+,", ",", text)
+    text = re.sub(r"\s{2,}", " ", text)
+    return text.strip()
+
+
+def smooth_sentences(text):
+    # Remove tiny fragments and ensure clean sentence boundaries
+    sents = sent_tokenize(text)
+    cleaned = []
+
+    for s in sents:
+        s = s.strip()
+
+        # Capitalize first letter if missing
+        if s and not s[0].isupper():
+            s = s[0].upper() + s[1:]
+
+        cleaned.append(s)
+
+    merged = " ".join(cleaned)
+
+    # Ensure ending punctuation
+    if merged and not merged.endswith((".", "!", "?")):
+        merged += "."
+
+    return merged
+
+# Summarization using tokens to follow the boundary of distilBART's model
 def summarize_text_adaptive(cleaned_text, chunks):
-    # Get word count
-    word_count = len(cleaned_text.split())
+    """
+    Token-based switch:
+    - If input tokens <= 900 → single-pass summarization
+    - If >900 → hierarchical summarization
+    
+    This is to ensure no broken-ending filtering and preserve more ore content
+    """
 
-    print(f"Total word count: {word_count}")
-   
+    num_tokens = len(tokenizer.encode(cleaned_text))
+    print(f"Total tokens: {num_tokens}")
 
-    # If Short text (under ~1000 words), summarize it all together
-    if word_count < 1000:
-        print("\nText is short — using single-pass summarization...\n")
+    MAX_TOKENS = 900   # safe threshold for DistilBART (<1024)
 
-        max_len = min(500, int(word_count * 0.4))
-        min_len = max(60, int(max_len * 0.5))
+    # CASE 1 — SINGLE-PASS (SAFE LENGTH)
+    if num_tokens <= MAX_TOKENS:
+        print("Single-pass summarization...")
 
-        summary = summarizer(
+        word_count = len(cleaned_text.split())
+        target_words = int(word_count * 0.25)   # ~25% target
+        target_tokens = int(target_words * 1.3)
+
+        max_len = min(512, target_tokens)
+        min_len = max(40, int(max_len * 0.5))
+
+        result = summarizer(
             cleaned_text,
             max_length=max_len,
             min_length=min_len,
+            no_repeat_ngram_size=3,
             do_sample=False
-        )[0]["summary_text"]
+        )
 
-        print(f"Final summary word count: {len(summary.split())}")
-        print(f"Compression ratio: {len(summary.split())/word_count:.2%}\n")
+        summary = result[0]["summary_text"]
 
+        summary = clean_summary_text(summary)
+        summary = smooth_sentences(summary)
+
+        print(f"Summary words: {len(summary.split())}")
         return summary
 
-    # If Long text (>= 1000 words), use summarize by chunks
-    else:
-        print("\nText is long — using hierarchical summarization...\n")
+    # CASE 2 — HIERARCHICAL SUMMARIZATION
+    print("Hierarchical summarization (token limit exceeded)...")
 
-        # Summarize each chunk
-        chunk_summaries = []
-        for i, chunk in enumerate(chunks):
-            print(f"Summarizing chunk {i+1}/{len(chunks)}...")
+    chunk_summaries = []
 
-            input_len = len(chunk.split())
-            max_len = min(150, int(input_len * 0.6))
-            min_len = max(20, int(max_len * 0.5))
+    for i, chunk in enumerate(chunks):
+        print(f"Chunk {i+1}/{len(chunks)}...")
 
-            if min_len >= max_len:
-                min_len = max(5, max_len - 5)
+        # If chunk is too small, skip summarization
+        if len(chunk.split()) < 40:
+            cleaned = clean_summary_text(chunk)
+            cleaned = smooth_sentences(cleaned)
+            if cleaned:
+                chunk_summaries.append(cleaned)
+            continue
 
-            try:
-                summary = summarizer(
-                    chunk,
-                    max_length=max_len,
-                    min_length=min_len,
-                    do_sample=False
-                )[0]["summary_text"]
-                chunk_summaries.append(summary)
-            except Exception as e:
-                chunk_summaries.append(f"[Error summarizing chunk {i+1}: {e}]")
+        # Target ~30% of each chunk
+        chunk_wc = len(chunk.split())
+        chunk_target_words = int(chunk_wc * 0.30)
+        chunk_target_tokens = int(chunk_target_words * 1.3)
 
-        # Merge chunk summaries
-        merged_text = " ".join(chunk_summaries)
+        max_len = min(256, chunk_target_tokens)
+        min_len = max(30, int(max_len * 0.5))
 
-        # Summarize merged text for a final cohesive version
-        print("\nGenerating final combined summary...\n")
-        final_summary = summarizer(
-            merged_text,
-            max_length=300,
-            min_length=100,
+        result = summarizer(
+            chunk,
+            max_length=max_len,
+            min_length=min_len,
+            no_repeat_ngram_size=3,
             do_sample=False
-        )[0]["summary_text"]
+        )
 
-        # Print stats
-        print(f"Original text word count: {word_count}")
-        print(f"Merged summaries word count: {len(merged_text.split())}")
-        print(f"Final summary word count: {len(final_summary.split())}")
-        print(f"Compression ratio: {len(final_summary.split())/word_count:.2%}\n")
+        cleaned = result[0]["summary_text"]
+        cleaned = clean_summary_text(cleaned)
+        cleaned = smooth_sentences(cleaned)
 
-        return final_summary
+        if cleaned:
+            chunk_summaries.append(cleaned)
+
+    # Merge chunks
+    merged = " ".join(s for s in chunk_summaries)
+
+    merged = clean_summary_text(merged)
+    merged = smooth_sentences(merged)
+
+    print(f"Final merged summary words: {len(merged.split())}")
+    return merged
