@@ -51,11 +51,6 @@ study-prep-bot/
 │   ├── prep.css
 │   └── prep.js
 │
-├── test/                  # Sample input files
-│   ├── sample-doc.docx
-│   ├── sample-pdf.pdf
-│   └── sample-text.txt
-│
 ├── requirements.txt
 └── README.md
 ```
