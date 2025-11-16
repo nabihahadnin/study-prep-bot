@@ -71,15 +71,5 @@ def main():
 
     return jsonify(response_data)
 
-    # Generate flashcards
-    num_cards = determine_num_cards(final_summary)
-    flashcards = generate_flashcards(final_summary, num_cards)
-
-    print("\nFLASHCARDS:\n")
-    for i, (q, a) in enumerate(flashcards, 2):
-        print(f"{i}. Q: {q}")
-        print(f"   A: {a}\n")
-
-
 if __name__ == "__main__":
     app.run(debug=True)
